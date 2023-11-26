@@ -49,7 +49,7 @@ async function seed() {
       profession: 'Musician',
       balance: 64,
       type:'contractor'
-    }),
+    }), 
     Profile.create({
       id: 6,
       firstName: 'Linus',

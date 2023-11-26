@@ -9,6 +9,7 @@ const getProfile = async (req, res, next) => {
 
 const getAllProfiles = async(req, res, next) =>
 {
+    const {Profile} = req.app.get('models')
     try {
     const profiles = await Profile.findAll()
     if(!profiles || profiles.length === 0)
@@ -16,12 +17,12 @@ const getAllProfiles = async(req, res, next) =>
     
     req.profiles = profiles;
 
-    next();
+     
     } catch (error) {
         console.error(error);
         return res.status(500).end(); // Handle any errors that occur during retrieval
     }
-   
+    next()
 }
 
-module.exports = {  getAllProfiles} 
+module.exports = {getProfile, getAllProfiles}
