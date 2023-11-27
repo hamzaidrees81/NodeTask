@@ -1,6 +1,6 @@
 const express = require('express');
 const router=express.Router()
-const {getUnpaidJobs} = require('../controllers/JobController')
+const {getUnpaidJobs, payJob} = require('../controllers/JobController')
 
 
 
@@ -10,12 +10,8 @@ const {getUnpaidJobs} = require('../controllers/JobController')
  * (**_either_** a client or contractor), for **_active contracts only_**.
  */
 router.get('/unpaid', getUnpaidJobs);
+router.get('/jobs/:job_id/pay', payJob);
 
-router.get('/', (req,res)=>
-{
-    res.status(200).json('hello');
-}
-);
-
+ 
 
 module.exports = router ;
