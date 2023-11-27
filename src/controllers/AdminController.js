@@ -17,9 +17,6 @@ async function bestProfession(req,res)
       
     const startDate = new Date(start);
     const endDate = new Date(end);
-    //job paid date contains time as well so we need to go till end of the day
-    endDate.setHours(23, 59, 59, 999);
-
     
     const result = await Job.findOne({
         attributes: [  [sequelize.fn('SUM', sequelize.col('price')), 'totalEarning']],
@@ -36,7 +33,6 @@ async function bestProfession(req,res)
         where: { paid: true,  paymentDate : { [Sequelize.Op.between]: [startDate, endDate]} },
         group: ['profession'],
         order: [['totalEarning', 'DESC']],
-        //raw: true
     })
 
     if (result === null) {
@@ -71,8 +67,6 @@ async function bestClients(req,res)
       
     const startDate = new Date(start);
     const endDate = new Date(end);
-    //job paid date contains time as well so we need to go till end of the day
-    endDate.setHours(23, 59, 59, 999);
 
     const result = await Job.findAll({
         attributes: [  [sequelize.fn('SUM', sequelize.col('price')), 'totalJobCost']],
@@ -92,8 +86,14 @@ async function bestClients(req,res)
         group: ['ClientId'],
         order: [['totalJobCost', 'DESC']],
         limit : limit,
+        //do not need to return model to response, only related attributes
         raw: true
     })
+
+    if (result.length === 0) {
+        console.error('No data found for the given criteria.');
+        return res.status(200).json({ error: 'No data found for the given criteria.' });
+    }
 
     res.status(200).json(result)
 }
