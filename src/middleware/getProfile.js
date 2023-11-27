@@ -1,4 +1,11 @@
 
+/**
+ * this works as an authentication mechanism based on matching the profie_id
+ * @param {} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
 const getProfile = async (req, res, next) => {
     const {Profile} = req.app.get('models')
     const profile = await Profile.findOne({where: {id: req.get('profile_id') || 0}})
@@ -7,22 +14,5 @@ const getProfile = async (req, res, next) => {
     next()
 }
 
-const getAllProfiles = async(req, res, next) =>
-{
-    const {Profile} = req.app.get('models')
-    try {
-    const profiles = await Profile.findAll()
-    if(!profiles || profiles.length === 0)
-     return res.status(401).end()
-    
-    req.profiles = profiles;
 
-     
-    } catch (error) {
-        console.error(error);
-        return res.status(500).end(); // Handle any errors that occur during retrieval
-    }
-    next()
-}
-
-module.exports = {getProfile, getAllProfiles}
+module.exports = {getProfile}
