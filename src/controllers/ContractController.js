@@ -1,6 +1,6 @@
-
 const {Sequelize} = require('sequelize');
- 
+const {Contract} = require('../models');
+
 
 /**
  * @returns get a contract by id
@@ -8,8 +8,7 @@ const {Sequelize} = require('sequelize');
 async function getContractById (req, res) {
 
     //profile id of requester because we only show contract to relevant stakeholder
-    profileId = req.get('profile_id')
-    const {Contract} = req.app.get('models')
+    const profileId = req.get('profile_id')
     const {id} = req.params
     
     //return a contract if the profile matches a client or contractor
@@ -28,27 +27,26 @@ async function getContractById (req, res) {
  * @returns all contract
  */
 
-async function getAllContracts (req, res) {
+async function getContractsByProfileId (req, res) {
   
     //profile id of requester
     profileId = req.get('profile_id')
-    const {Contract} = req.app.get('models')
     
-    //return a contract if the profile matches a client or contractor
-    const contract = await Contract.findAll({where: {
+    //return list of contracts if the profile matches a client or contractor
+    const contracts = await Contract.findAll({where: {
             [Sequelize.Op.or]: [
-            { contractorId: profileId },
-            { clientId: profileId } 
-        ]
+                { contractorId: profileId },
+                { clientId: profileId } 
+                ]
         ,
         [Sequelize.Op.not ]: [{status: 'terminated'}]        
     }});
 
-    if (contract.length === 0) {
+    if (contracts.length === 0) {
         return res.status(200).json({ error: 'No data found' });
     }
 
-    res.json(contract)
+    res.json(contracts)
 }
 
-module.exports = {getAllContracts, getContractById}
+module.exports = {getContractsByProfileId, getContractById}

@@ -1,15 +1,14 @@
 const {Sequelize} = require('sequelize');
-const {sequelize} = require('../models/model')
+const {sequelize, Job, Contract, Profile} = require('../models')
+
 /**
  * get all unpaid jobs belonging to a user 
  * @param {*} req 
  * @param {*} res 
  */
-async function  getUnpaidJobs(req, res) {
-    
+async function  getUnpaidJobs(req, res) {    
     // Profile id of requester to show relevant jobs only
     const profileId = req.get('profile_id');
-    const { Job, Contract, Profile } = req.app.get('models');
 
     try {
         const unpaidJobs = await Job.findAll({
@@ -17,8 +16,8 @@ async function  getUnpaidJobs(req, res) {
                 model: Contract,
                 where: {
                     [Sequelize.Op.or]: [
-                        { ContractorId: profileId },
-                        { ClientId: profileId }
+                        { contractorId: profileId },
+                        { clientId: profileId }
                     ],
                     status: 'in_progress'
                 },
@@ -45,55 +44,57 @@ async function  getUnpaidJobs(req, res) {
 async function  payJob (req, res) {
     const profileId = req.get('profile_id');
     const jobId = req.params.job_id;
-    const { Job, Contract, Profile } = req.app.get('models');
 
     try {
-        console.log('Searching for job');
-
-        const job = await Job.findOne({
+        await sequelize.transaction(async (t) => {
+          const job = await Job.findOne({
             where: { id: jobId },
             include: {
-                model: Contract,
-                include: [
-                  { model: Profile,
-                    as: 'Client',
-                 where: {
-                    id: profileId 
-                      }
-                 }
-                ]
+              model: Contract,
+              include: [
+                {
+                  model: Profile,
+                  as: 'Client',
+                  where: { id: profileId }
+                }
+              ]
             }
-        });
-
-        if (!job) {
-            log.debug('Job not found.')
-            return res.status(200).json({ error: 'Job not found' });
-        }
-
-        // Check if the job is already paid
-        if (job.paid) {
+          });
+      
+          if (!job) {
+            console.error('Job not found with id: ' + jobId);
+            return res.status(404).json({ error: 'Job not found' });
+          }
+      
+          if (job.paid) {
             return res.status(400).json({ error: 'Job is already paid' });
-        }
-
-        // Check if the client's balance is enough to pay for the job
-        if (job.price > job.Contract.Client.balance) {
-            return res.status(400).json({ error: 'Insufficient balance: User does not have enough balance to pay. Required balance: '+job.Contract.price });
-        }
-
-        // Update balances - deduct from client and add to contractor
-        await sequelize.transaction(async (t) => {
-            await Profile.decrement('balance', { by: job.price, where: { id: job.Contract.ClientId }, transaction: t });
-            await Profile.increment('balance', { by: job.price, where: { id: job.Contract.ContractorId }, transaction: t });
-            await Job.update({ paid: true, paymentDate: Sequelize.literal('CURRENT_TIMESTAMP') }, { where: { id: jobId }, transaction: t });
+          }
+      
+          const price = job.price;
+          const clientBalance = job.Contract.Client.balance;
+      
+          if (price > clientBalance) {
+            return res.status(400).json({
+              error: `Insufficient balance: User does not have enough balance to pay. Required balance: ${price}`
+            });
+          }
+      
+          // Deduct from client and add to contractor balances
+          await Profile.decrement('balance', { by: price, where: { id: job.Contract.ClientId }, transaction: t });
+          await Profile.increment('balance', { by: price, where: { id: job.Contract.ContractorId }, transaction: t });
+      
+          // Mark job as paid and update paymentDate
+          await Job.update(
+            { paid: true, paymentDate: Sequelize.literal('CURRENT_TIMESTAMP') },
+            { where: { id: jobId }, transaction: t }
+          );
+      
+          res.json({ message: 'Payment successful' });
         });
-
-        res.json({ message: 'Payment successful' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+      } catch (error) {
+        console.error('Transaction error:', error);
+        return res.status(500).json({ error: 'Transaction failed. Please try again later.' });
+      }
 }
-
-
 
 module.exports = {getUnpaidJobs, payJob};
