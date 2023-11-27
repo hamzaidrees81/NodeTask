@@ -1,12 +1,5 @@
-const {
-	Sequelize
-} = require('sequelize');
-const {
-	sequelize,
-	Job,
-	Contract,
-	Profile
-} = require('../models');
+const {	Sequelize } = require('sequelize');
+const {	sequelize, Job, Contract, Profile } = require('../models');
 
 /**
  * this return best profession that had maximum amount earned from jobs
@@ -15,10 +8,7 @@ const {
  * @returns 
  */
 async function getBestProfession(req, res) {
-	const {
-		start,
-		end
-	} = req.query;
+	const {start, end } = req.query;
 
 	//check if start or end is provided
 	if (!start || !end) {
@@ -32,7 +22,6 @@ async function getBestProfession(req, res) {
 	const endDate = new Date(end);
 
 	if (isNaN(startDate) || isNaN(endDate)) {
-		console.error('Invalid start date input');
 		console.error('Please provide correct start and end dates.');
 		return res.status(400).json({
 			error: 'Please provide correct start and end dates.'
@@ -74,9 +63,8 @@ async function getBestProfession(req, res) {
 	res.status(200).json(result.Contract.Client.profession)
 }
 
-
 /**
- * retrieve list of best clients in a timeperiod with a limit
+ * retrieve list of best clients in a timeperiod with a limit on records
  * @param {*} req 
  * @param {*} res 
  * @returns 

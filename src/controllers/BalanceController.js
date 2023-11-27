@@ -49,7 +49,7 @@ async function depositBalance(req, res) {
 			});
 
 			if (!client) {
-				return res.status(200).json({
+				return res.status(400).json({
 					error: 'Client not found'
 				});
 			}

@@ -4,8 +4,6 @@ const {
 	depositBalance
 } = require('../controllers/BalanceController')
 
-
-
 router.post('/deposit/:userId', depositBalance);
 
 module.exports = router;

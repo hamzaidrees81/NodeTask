@@ -5,10 +5,7 @@ const {
 	getBestProfession
 } = require('../controllers/AdminController')
 
-
-
 router.get('/best-profession', getBestProfession);
 router.get('/best-clients', getBestClients);
-
 
 module.exports = router;
