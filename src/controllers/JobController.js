@@ -1,4 +1,4 @@
-
+const {Sequelize} = require('sequelize');
 
 async function  getUnpaidJobs(req, res) {
     // Profile id of requester
@@ -33,4 +33,4 @@ async function  getUnpaidJobs(req, res) {
     }
 }
 
-module.exports[getUnpaidJobs];
+module.exports = {getUnpaidJobs};

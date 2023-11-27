@@ -5,50 +5,14 @@ const {getProfile} = require('./middleware/getProfile')
 const Sequelize = require('sequelize');
 const app = express();
 
-const jobController = require('./controllers/JobController')
+
 
 app.use(bodyParser.json());
 app.use(getProfile)
 app.set('sequelize', sequelize)
 app.set('models', sequelize.models)
-
-/**
- * @return unpaid jobs for a user with active clients only
- * 1. **_GET_** `/jobs/unpaid` - Get all unpaid jobs for a user 
- * (**_either_** a client or contractor), for **_active contracts only_**.
- */
-app.get('/jobs/unpaid',  async (req, res) => {
-    // Profile id of requester
-    const profileId = req.get('profile_id');
-    const { Job, Contract, Profile } = req.app.get('models');
-
-    try {
-        const unpaidJobs = await Job.findAll({
-            include: [{
-                model: Contract,
-                include: [
-                    { model: Profile, as: 'Contractor' },
-                    { model: Profile, as: 'Client' }
-                ],
-                where: {
-                    [Sequelize.Op.or]: [
-                        { ContractorId: profileId },
-                        { ClientId: profileId }
-                    ],
-                    status: 'in_progress' // Assuming there's a field 'status' in Contract model representing contract status
-                },
-                model: Contract
-                
-            }],
-            where: { [Sequelize.Op.or]: [{ paid: false }, { paid: null }] } // DOES NOT WORK
-        });
-
-        res.json(unpaidJobs);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+const jobRoutes = require('./routers/jobs');
+app.use('/jobs', jobRoutes)
 
 
 /**
@@ -148,58 +112,135 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
 });
 
 
+
+
 app.get('/admin/best-profession', getProfile,  async (req, res) => {
     // Adjusting the start and end dates to include the entire day
     const { start, end } = req.query;
     const { Job, Contract, Profile } = req.app.get('models');
 
+    if (!start || !end) {
+        return res.status(400).json({ error: 'Please provide both start and end dates.' });
+      }
+
     const startDate = new Date(start);
     const endDate = new Date(end);
-  
-   
+    //to cover end of day because we are storing time as well
+    endDate.setHours(23, 59, 59, 999);
+
   try {
     const result = await Profile.findAll({
+        
         attributes: [
             'profession',
-//           [sequelize.fn('SUM', sequelize.col('contractor.jobs.price')), 'totalEarned']
+           [sequelize.fn('SUM', sequelize.col('contractor.jobs.price')), 'totalEarned']
+   
           ],
         include: [ 
         { model: Contract, as : 'Contractor',
-            attributes: [ 'contractorId' ],
+            attributes: [  ],
             include : [{ model: Job ,
-            attributes: [
-                'price',
-                [sequelize.fn('SUM', sequelize.col('contractor.jobs.price')), 'totalEarned']
-            ],
-            where: { paid: true }
+            attributes: [],
+            where: { paid: true , paymentDate : { [Sequelize.Op.between]: [startDate, endDate]} }
         }]
         },
         ],
         where : {type: "contractor"},
         group: ['profession'],
             //order: [[sequelize.col('Contractor.Jobs.totalEarned'), 'DESC']]
-            order: [[sequelize.literal('`Contractor.Jobs.totalEarned`'), 'DESC']]
+            order: [[sequelize.literal('`totalEarned`'), 'DESC']],
+            having: sequelize.where(sequelize.fn('SUM', sequelize.col('contractor.jobs.price')), {
+                [Sequelize.Op.not]: null
+            })
         });
 
-
-
-    console.log('Result: ' + result);
-    //console.log(result);
-
+       
         if (result.length === 0) {
             return res.status(404).json({ error: 'No data found' });
         }
 
-        res.json(result);
-       /* res.json({
-            bestProfession: result[0].dataValues.profession,
-            totalEarnings: result[0].dataValues.totalEarnings
+        const topProfession = result[0].dataValues.profession;
+        //const totalEarnings = result[0].dataValues.totalEarned;
+
+        res.json({
+            bestProfession: topProfession,
+            //totalEarnings: totalEarnings
         });
-        */
+
+   
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+
+app.get('/admin/best-clients', getProfile,  async (req,res) => 
+{
+    const { Job, Contract, Profile } = req.app.get('models');
+
+    const {start, end} = req.query;
+
+    //check if start or end is provided
+
+    if (!start || !end) {
+        return res.status(400).json({ error: 'Please provide both start and end dates.' });
+      }
+      
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    //to cover end of day because we are storing time as well
+    endDate.setHours(23, 59, 59, 999);
+
+   
+    const results = await Profile.findAll({
+        attributes: [ 'firstName' , 'lastName' ,  [sequelize.fn('SUM', sequelize.col('client.jobs.price')), 'totalPaid'] ],
+        include:
+        [
+            {
+                attributes: [ ],
+                model: Contract, as : 'Client', 
+    
+                //get jobs of client
+                include: [{
+                    model: Job,
+                    attributes: [    
+                  //      [sequelize.fn('SUM', sequelize.col('client.jobs.price')), 'totalPaid'],
+                  //      [sequelize.fn('count', sequelize.col('client.jobs.price')), 'totalJobs'] 
+                ],
+                    where: {paid: true,
+                         paymentDate : { [Sequelize.Op.between]: [startDate, endDate]}
+                    }
+                }]
+            }
+            
+        ],
+        where: { type : 'client' },
+        group: ['firstName' , 'lastName' ],
+        order: [[sequelize.literal('`totalPaid`'), 'DESC']],
+        having: sequelize.where(sequelize.fn('SUM', sequelize.col('client.jobs.price')), {
+            [Sequelize.Op.not]: null
+        })
+    })
+      
+     
+    if (results.length === 0) {
+        return res.status(404).json({ error: 'No data found' });
+    }
+/*
+    const highestPaidFname = results[0].dataValues.firstName;
+    const highestPaidLname = results[0].dataValues.lastName;
+    const highestPaidAmount = results[0].dataValues.totalPaid;
+    
+    const highestPaid = {
+        highestPaidFname , highestPaidLname,  highestPaidAmount 
+    }
+     res.status(200).json(highestPaid);
+
+*/
+res.status(200).json(results);
+
+
 });
 
  
