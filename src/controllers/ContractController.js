@@ -3,11 +3,11 @@ const {Sequelize} = require('sequelize');
  
 
 /**
- * @returns contract by id
+ * @returns get a contract by id
  */
-
 async function getContractById (req, res) {
-    //profile id of requester
+
+    //profile id of requester because we only show contract to relevant stakeholder
     profileId = req.get('profile_id')
     const {Contract} = req.app.get('models')
     const {id} = req.params
@@ -41,14 +41,8 @@ async function getAllContracts (req, res) {
             { clientId: profileId } 
         ]
         ,
-        [Sequelize.Op.not ]: [
-            {
-                status: 'terminated'
-            }
-        ]        
+        [Sequelize.Op.not ]: [{status: 'terminated'}]        
     }});
-
-    if(!contract) return res.status(404).end()
 
     if (contract.length === 0) {
         return res.status(200).json({ error: 'No data found' });

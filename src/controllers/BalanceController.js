@@ -2,9 +2,15 @@
 const {Sequelize} = require('sequelize');
 const {sequelize, Contract} = require('../models/model')
 
+/**
+ * deposit balance to a client
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
 async function depositBalance (req, res)   {
     const userId = req.params.userId;
-    const depositAmount = parseFloat(req.body.amount); // Assuming the amount is sent in the request body
+    const depositAmount = parseFloat(req.body.amount); //amount is sent in the request body
     const { Job, Profile } = req.app.get('models');
 
     try {
@@ -17,10 +23,7 @@ async function depositBalance (req, res)   {
                     include: {
                         model: Job,
                         where: {
-                            [Sequelize.Op.or]: [
-                                { paid: false },
-                                { paid: null } // Consider only unpaid jobs
-                            ]
+                            paid: {[Sequelize.Op.not]: true},
                         },
                         attributes: [
                             [Sequelize.fn('SUM', Sequelize.col('price')), 'totalJobsToPay']
@@ -31,7 +34,7 @@ async function depositBalance (req, res)   {
         });
     
         if (!client) {
-            return res.status(404).json({ error: 'Client not found' });
+            return res.status(200).json({ error: 'Client not found' });
         }
     
         const totalJobsToPay = client.Client.reduce((sum, contract) => {

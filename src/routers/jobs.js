@@ -10,7 +10,7 @@ const {getUnpaidJobs, payJob} = require('../controllers/JobController')
  * (**_either_** a client or contractor), for **_active contracts only_**.
  */
 router.get('/unpaid', getUnpaidJobs);
-router.get('/jobs/:job_id/pay', payJob);
+router.post('/:job_id/pay', payJob);
 
  
 
