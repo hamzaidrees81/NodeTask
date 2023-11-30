@@ -95,3 +95,10 @@ It would be great for example if you'd write some unit test / simple frontend de
 When you have finished the assignment, zip your repo (make sure to include .git folder) and send us the zip.
 
 Thank you and good luck! 🙏
+
+
+
+
+PARTIALLY IMPLEMENTED ELEMENTS:
+1. Custom exceptions - created but implemented only in AdminController and Middleware
+2. Created supertests for controllers, unit tests for every service would be added later on...

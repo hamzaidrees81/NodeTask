@@ -1,151 +1,68 @@
-const {	Sequelize } = require('sequelize');
-const {	sequelize, Job, Contract, Profile } = require('../models');
+const { getBestProfession, getBestClients } = require('../services/adminService');
+const InvalidParamException = require('../errors/InvalidParamException');
+const ContentNotFoundException = require('../errors/ContentNotFoundException');
+const MissingParamException = require('../errors/MissingParamException');
 
-/**
- * this return best profession that had maximum amount earned from jobs
- * @param {} req 
- * @param {*} res 
- * @returns 
- */
-async function getBestProfession(req, res) {
-	const {start, end } = req.query;
+async function findBestProfession(req, res) {
+  try {
+    const { start, end } = req.query;
 
-	//check if start or end is provided
-	if (!start || !end) {
-		console.error('Please provide both start and end dates.');
-		return res.status(400).json({
-			error: 'Please provide both start and end dates.'
-		});
-	}
+    const { startDate, endDate } = validateDates(start, end);
+  
+    const result = await getBestProfession(startDate, endDate);
 
-	const startDate = new Date(start);
-	const endDate = new Date(end);
+    if (!result) {
+      throw new Error('No data found for the given criteria.');
+    }
 
-	if (isNaN(startDate) || isNaN(endDate)) {
-		console.error('Please provide correct start and end dates.');
-		return res.status(400).json({
-			error: 'Please provide correct start and end dates.'
-		});
-	}
-
-	const result = await Job.findOne({
-		attributes: [
-			[sequelize.fn('SUM', sequelize.col('price')), 'totalEarning']
-		],
-		include: [{
-			model: Contract,
-			attributes: ['clientId'],
-			include: [{
-				model: Profile,
-				as: 'Client',
-				attributes: ['profession']
-			}]
-		}],
-		where: {
-			paid: true,
-			paymentDate: {
-				[Sequelize.Op.between]: [startDate, endDate]
-			}
-		},
-		group: ['profession'],
-		order: [
-			['totalEarning', 'DESC']
-		]
-	});
-
-	if (!result) {
-		console.error('No data found for the given criteria.');
-		return res.status(200).json({
-			error: 'No data found for the given criteria.'
-		});
-	}
-
-	res.status(200).json(result.Contract.Client.profession)
+    res.status(200).json({bestProfession:result});
+  } catch (error) {
+      console.log(error);
+      return res.status(error.status || 500).json({
+       error: error.message,
+    });
+  
+  }
 }
 
-/**
- * retrieve list of best clients in a timeperiod with a limit on records
- * @param {*} req 
- * @param {*} res 
- * @returns 
- */
-async function getBestClients(req, res) {
-	const {
-		start,
-		end,
-		limit = 2
-	} = req.query;
+async function findBestClients(req, res) {
+  try {
+    const { start, end, limit = 2 } = req.query;
 
-	//check if start or end is provided
-	if (!start || !end) {
-		console.error('Please provide both start and end dates.');
-		return res.status(400).json({
-			error: 'Please provide both start and end dates.'
-		});
-	}
+    const { startDate, endDate } = validateDates(start, end);
+  
+    if (!Number.isInteger(parseInt(limit))) {
+      throw new InvalidParamException('Limit should be an integer.');
+    }
 
-	const startDate = new Date(start);
-	const endDate = new Date(end);
+    const results = await getBestClients(startDate, endDate, limit);
 
-	if (isNaN(startDate) || isNaN(endDate)) {
-		console.error('Invalid start date input');
-		console.error('Please provide correct start and end dates.');
-		return res.status(400).json({
-			error: 'Please provide correct start and end dates.'
-		});
-	}
+    if (results.length === 0) {
+      throw new ContentNotFoundException('No data found for the given criteria.');
+    }
 
-
-	// Check if parsedLimit is a valid integer
-	if (!Number.isInteger(parseInt(limit))) {
-		console.error('Limit should be an integer.');
-		return res.status(400).json({
-			error: 'Limit should be an integer.'
-		});
-	}
-
-	const results = await Job.findAll({
-		attributes: [
-			[sequelize.fn('SUM', sequelize.col('price')), 'totalJobCost'],
-			[
-				sequelize.literal("`Contract->Client`.`firstName` || ' ' || `Contract->Client`.`lastName`"),
-				'fullName' // Concatenated full name alias
-			]
-		],
-		include: [{
-			model: Contract,
-			attributes: [],
-			include: [{
-				model: Profile,
-				as: 'Client',
-				attributes: []
-			}]
-		}],
-		where: {
-			paid: true,
-			paymentDate: {
-				[Sequelize.Op.between]: [startDate, endDate]
-			}
-		},
-		group: ['ClientId'],
-		order: [
-			['totalJobCost', 'DESC']
-		],
-		limit: limit,
-		raw: true
-	});
-
-	if (results.length === 0) {
-		console.error('No data found for the given criteria.');
-		return res.status(200).json({
-			error: 'No data found for the given criteria.'
-		});
-	}
-
-	res.status(200).json(results);
+    res.status(200).json(results);
+  } catch (error) {
+    console.log(error); 
+      return res.status(error.status || 500).json({
+        error: error.message,
+    });
+  }
 }
 
-module.exports = {
-	getBestProfession,
-	getBestClients
+function validateDates(start, end) {
+  if (!start || !end) {
+    throw new MissingParamException('Please provide both start and end dates.');
+  }
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  if (isNaN(startDate) || isNaN(endDate)) {
+    throw new InvalidParamException('Please provide correct start and end dates.');
+  }
+
+  return { startDate, endDate };
 }
+
+module.exports = { findBestProfession, findBestClients };

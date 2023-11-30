@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router()
 const {
-	getBestClients,
-	getBestProfession
+	findBestProfession,
+	findBestClients
 } = require('../controllers/AdminController')
 
-router.get('/best-profession', getBestProfession);
-router.get('/best-clients', getBestClients);
+router.get('/best-profession', findBestProfession);
+router.get('/best-clients', findBestClients);
 
 module.exports = router;

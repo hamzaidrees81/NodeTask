@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router()
 const {
-	getUnpaidJobs,
-	payJob
+	fetchUnpaidJobs,
+	handlePayment
 } = require('../controllers/JobController')
 
-router.get('/unpaid', getUnpaidJobs);
-router.post('/:job_id/pay', payJob);
+router.get('/unpaid', fetchUnpaidJobs);
+router.post('/:job_id/pay', handlePayment);
 
 module.exports = router;

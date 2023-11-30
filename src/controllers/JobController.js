@@ -1,145 +1,41 @@
-const {
-	Sequelize
-} = require('sequelize');
-const {
-	sequelize,
-	Job,
-	Contract,
-	Profile
-} = require('../models')
+const { getUnpaidJobs, payForJob } = require('../services/jobService');
 
-/**
- * get all unpaid jobs belonging to a user 
- * @param {*} req 
- * @param {*} res 
- */
-async function getUnpaidJobs(req, res) {
-	// Profile id of requester to show relevant jobs only
-	const profileId = req.get('profile_id');
+async function fetchUnpaidJobs(req, res) {
+  try {
+    const userId = req.get('profile_id');
 
-	try {
-		const unpaidJobs = await Job.findAll({
-			include: [{
-				model: Contract,
-				where: {
-					[Sequelize.Op.or]: [{
-							contractorId: profileId
-						},
-						{
-							clientId: profileId
-						}
-					],
-					status: 'in_progress'
-				},
-				attributes: [] //attirbutes of contract are not required
-			}],
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'User id is missing.' });
+    }
+    const unpaidJobs = await getUnpaidJobs(userId);
 
-			where: {
-				paid: {
-					[Sequelize.Op.not]: true
-				}
-			}
-		});
-
-		res.json(unpaidJobs);
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({
-			error: 'Internal server error'
-		});
-	}
+    res.json(unpaidJobs);
+  } catch (error) {
+    console.error('Error fetching unpaid jobs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
-/**
- * pay for a job
- * @param {*} req 
- * @param {*} res 
- * @returns 
- */
-async function payJob(req, res) {
-	const profileId = req.get('profile_id');
-	const jobId = req.params.job_id;
+async function handlePayment(req, res) {
+  try {
+    const userId = req.get('profile_id');
+    const jobId  = req.params.job_id;
+  
+      if (userId ===null || isNaN(userId)) {
+        return res.status(400).json({ error: 'User id is missing.' });
+      }
 
-	try {
-		await sequelize.transaction(async (t) => {
-			const job = await Job.findOne({
-				where: {
-					id: jobId
-				},
-				include: {
-					model: Contract,
-					include: [{
-						model: Profile,
-						as: 'Client',
-						where: {
-							id: profileId
-						}
-					}]
-				}
-			});
+      if (jobId ===null || isNaN(jobId)) {
+        return res.status(400).json({ error: 'Job id is missing.' });
+      }
 
-			if (!job) {
-				console.error('Job not found with id: ' + jobId);
-				return res.status(404).json({
-					error: 'Job not found'
-				});
-			}
+    const message = await payForJob(userId, jobId);
 
-			if (job.paid) {
-				return res.status(400).json({
-					error: 'Job is already paid'
-				});
-			}
-
-			const price = job.price;
-			const clientBalance = job.Contract.Client.balance;
-
-			if (price > clientBalance) {
-				return res.status(400).json({
-					error: `Insufficient balance: User does not have enough balance to pay. Required balance: ${price}`
-				});
-			}
-
-			// Deduct from client and add to contractor balances
-			await Profile.decrement('balance', {
-				by: price,
-				where: {
-					id: job.Contract.ClientId
-				},
-				transaction: t
-			});
-			await Profile.increment('balance', {
-				by: price,
-				where: {
-					id: job.Contract.ContractorId
-				},
-				transaction: t
-			});
-
-			// Mark job as paid and update paymentDate
-			await Job.update({
-				paid: true,
-				paymentDate: Sequelize.literal('CURRENT_TIMESTAMP')
-			}, {
-				where: {
-					id: jobId
-				},
-				transaction: t
-			});
-
-			res.json({
-				message: 'Payment successful'
-			});
-		});
-	} catch (error) {
-		console.error('Transaction error:', error);
-		return res.status(500).json({
-			error: 'Transaction failed. Please try again later.'
-		});
-	}
+    res.json({ message });
+  } catch (error) {
+    console.error('Error processing payments:', error);
+    res.status(500).json({ error: error.message  });
+  }
 }
 
-module.exports = {
-	getUnpaidJobs,
-	payJob
-};
+module.exports = { fetchUnpaidJobs, handlePayment };

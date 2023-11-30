@@ -1,75 +1,54 @@
-const {
-	Sequelize
-} = require('sequelize');
-const {
-	Contract
-} = require('../models');
+const contractService = require('../services/contractService');
+const InvalidParamException = require('../errors/InvalidParamException');
+const ContentNotFoundException = require('../errors/ContentNotFoundException');
+const UnauthorizedException = require('../errors/UnauthorizedException');
 
 
-/**
- * @returns get a contract by id
- */
 async function getContractById(req, res) {
+    const profileId = req.get('profile_id');
+    const { id } = req.params;
 
-	//profile id of requester because we only show contract to relevant stakeholder
-	const profileId = req.get('profile_id')
-	const {
-		id
-	} = req.params
+    
+    try {
+        if (!id || isNaN(Number(id))) {
+            throw new UnauthorizedException('Invalid contract id. Please send correct contract id.');
+        } 
 
-	//return a contract if the profile matches a client or contractor
-	const contract = await Contract.findOne({
-		where: {
-			id,
-			[Sequelize.Op.or]: [{
-					contractorId: profileId
-				},
-				{
-					clientId: profileId
-				}
-			]
-		}
-	});
-
-	if (!contract) return res.status(404).end()
-	res.json(contract)
+        const contract = await contractService.getContractById(profileId, id);
+        if (!contract) {
+            throw new ContentNotFoundException(`Cannot find contact with id ${id}`);
+        }
+        res.json(contract);
+    } 
+     catch (error) {
+            console.log(error);
+            return res.status(error.status || 500).json({
+            error: error.message,
+          }).end();
+        
+      }
 }
 
-/**
- * @returns all contract
- */
+async function getContractsByProfile(req, res) {
+    const profileId = req.get('profile_id');
 
-async function getContractsByProfileId(req, res) {
-
-	//profile id of requester
-	profileId = req.get('profile_id')
-
-	//return list of contracts if the profile matches a client or contractor
-	const contracts = await Contract.findAll({
-		where: {
-			[Sequelize.Op.or]: [{
-					contractorId: profileId
-				},
-				{
-					clientId: profileId
-				}
-			],
-			[Sequelize.Op.not]: [{
-				status: 'terminated'
-			}]
-		}
-	});
-
-	if (contracts.length === 0) {
-		return res.status(200).json({
-			error: 'No data found'
-		});
-	}
-
-	res.json(contracts)
+    try {
+        const contracts = await contractService.getContractsByProfile(profileId);
+        if (contracts.length === 0) { 
+            return res.status(200).json({ error: 'No data found' });
+        }
+        res.status(200).json(contracts).end();
+    }  
+    catch (error) {
+        console.log(error);
+        return res.status(error.status || 500).json({
+            error: error.message,
+        }).end();
+    
+  }
 }
 
 module.exports = {
-	getContractsByProfileId,
-	getContractById
-}
+    getContractsByProfile,
+    getContractById
+};
