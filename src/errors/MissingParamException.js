@@ -9,6 +9,4 @@ class MissingParamException extends DeelException
       }
 }
 
-
-
 module.exports = MissingParamException;

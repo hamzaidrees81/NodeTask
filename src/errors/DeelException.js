@@ -5,6 +5,4 @@ class DeelException extends Error{
       }
 }
 
-
-
 module.exports = DeelException;

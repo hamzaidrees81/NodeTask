@@ -1,9 +1,13 @@
 const { Sequelize } = require('sequelize');
 const { Contract, Job, Profile, sequelize } = require('../models');
 
+/**
+ * deposit balance amount to client 
+ * @param {*} userId 
+ * @param {*} depositAmount 
+ * @returns 
+ */
 async function depositToClient(userId, depositAmount) {
- 
-
   try {
     return 	await sequelize.transaction(async (t) => {
        const client = await Profile.findOne({
@@ -36,6 +40,7 @@ async function depositToClient(userId, depositAmount) {
     }, 0) || 0;
       const maxDeposit = totalJobsToPay * 0.25;
 
+      //deposit amount cannot be creater than 25% of total unpaid
       if (depositAmount > maxDeposit) {
         throw new Error('Deposit '+depositAmount+' exceeds 25% of total jobs to pay of '+maxDeposit+ ' max dep of jobs '+totalJobsToPay );
       }

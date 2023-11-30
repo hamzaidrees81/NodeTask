@@ -9,6 +9,4 @@ class UnauthorizedException extends DeelException
     }
 }
 
-
-
 module.exports = UnauthorizedException;

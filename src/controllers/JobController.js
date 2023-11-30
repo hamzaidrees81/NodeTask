@@ -26,7 +26,7 @@ async function handlePayment(req, res) {
       }
 
       if (jobId ===null || isNaN(jobId)) {
-        return res.status(400).json({ error: 'Job id is missing.' });
+        return res.status(400).json({ error: 'Please give correct Job id.' });
       }
 
     const message = await payForJob(userId, jobId);

@@ -10,31 +10,29 @@ describe('Contract API', function () {
             .expect(200)
             .end(function (err, res) {
                 if (err) return done(err);
-                assert(res.body); // Assert that response body exists
-                // Add more assertions as needed to check the structure of the response
+                assert(res.body); 
                 done();
             });
     });
 
     it('should return 404 for non-existent contract', function (done) {
         request(app)
-            .get('/contracts/999') // Replace '/contracts/999' with a non-existent contract ID
-            .set('profile_id', 1) // Replace 'yourProfileId' with a valid profile ID
+            .get('/contracts/999')
+            .set('profile_id', 1)
             .expect(404, done);
     });
 
     it('should get contracts by profile', function (done) {
         request(app)
-            .get('/contracts') // Replace '/contracts' with your actual endpoint
-            .set('profile_id', 1) // Replace 'yourProfileId' with a valid profile ID
+            .get('/contracts')
+            .set('profile_id', 1)
             .expect(200)
             .end(function (err, res) {
                 if (err) return done(err);
-                assert(Array.isArray(res.body)); // Assert that response body is an array
-                // Add more assertions as needed to check the structure of the response
+                assert(Array.isArray(res.body)); 
                 done();
             });
     });
 
-    // Add more test cases as needed
+    //ADD More tests to confirm the structure received is standard
 });

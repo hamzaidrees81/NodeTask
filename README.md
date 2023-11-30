@@ -98,6 +98,9 @@ Thank you and good luck! 🙏
 
 
 
+NOTES:
+
+Added supertests and postman collection for validation
 
 PARTIALLY IMPLEMENTED ELEMENTS:
 1. Custom exceptions - created but implemented only in AdminController and Middleware

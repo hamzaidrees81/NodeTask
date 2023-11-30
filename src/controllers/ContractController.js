@@ -3,12 +3,10 @@ const InvalidParamException = require('../errors/InvalidParamException');
 const ContentNotFoundException = require('../errors/ContentNotFoundException');
 const UnauthorizedException = require('../errors/UnauthorizedException');
 
-
 async function getContractById(req, res) {
     const profileId = req.get('profile_id');
     const { id } = req.params;
 
-    
     try {
         if (!id || isNaN(Number(id))) {
             throw new UnauthorizedException('Invalid contract id. Please send correct contract id.');
@@ -21,11 +19,11 @@ async function getContractById(req, res) {
         res.json(contract);
     } 
      catch (error) {
-            console.log(error);
-            return res.status(error.status || 500).json({
-            error: error.message,
-          }).end();
-        
+        console.log(error);
+        return res.status(error.code || 500).json({
+        error: error.message,
+        }).end();
+    
       }
 }
 
@@ -41,7 +39,7 @@ async function getContractsByProfile(req, res) {
     }  
     catch (error) {
         console.log(error);
-        return res.status(error.status || 500).json({
+        return res.status(error.code || 500).json({
             error: error.message,
         }).end();
     

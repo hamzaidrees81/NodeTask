@@ -17,9 +17,7 @@ const getProfile = async (req, res, next) => {
 
 	try {
 		if (!profileId || isNaN(Number(profileId))) {
-			const error = new UnauthorizedException('Cannot authorize for profileId. Please check if correct profileid is given.')
-			console.log(error);
-			throw error;
+			throw new UnauthorizedException('Cannot authorize for profileId. Please check if correct profileid is given.')
 		} 
 		const profile = await Profile.findOne({
 			where: {
@@ -28,15 +26,14 @@ const getProfile = async (req, res, next) => {
 		})
 		if (!profile)
 		{ 
-			const error = new UnauthorizedException('Authorization failed, profile does not exist.');
-			console.log(error);
-			throw error;
-		}	
+			throw new UnauthorizedException('Authorization failed, profile does not exist.');
+		}
 		req.profile = profile;
 		next();
 	}
 	catch(error)
 	{
+		console.log(error);
 		return res.status(error.code | 500).json({ error: error.message }).end();
 	}
 	

@@ -5,15 +5,14 @@ async function depositBalance(req, res) {
   const depositAmount = parseFloat(req.body.amount);
 
   try {
+    if (isNaN(depositAmount)) {
+      throw new Error('Invalid amount passed');
+    }
 
-	if (isNaN(depositAmount)) {
-		throw new Error('Invalid amount passed');
-	}
-
-	
-	if (isNaN(userId)) {
-		throw new Error('User id is missing.');
-	}
+    
+    if (isNaN(userId)) {
+      throw new Error('User id is missing.');
+    }
 
     const result = await depositToClient(userId, depositAmount);
     res.json(result);

@@ -9,6 +9,4 @@ class InvalidParamException extends DeelException
     }
 }
 
-
-
 module.exports = InvalidParamException;

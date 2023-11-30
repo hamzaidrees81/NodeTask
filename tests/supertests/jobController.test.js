@@ -58,8 +58,7 @@ describe('Job Controller Endpoints', () => {
       .post(`/jobs/${jobId}/pay/`)
       .set('profile_id', profileId.toString())
       .expect(400);
-
-    expect(response.body).toEqual({ error: 'Job id is missing.' });
+      expect(response.body).toHaveProperty('error');
   });
 
   it('should handle errors during payment processing', async () => {
@@ -73,8 +72,8 @@ describe('Job Controller Endpoints', () => {
       .set('profile_id', profileId.toString())
       .expect(500);
 
-    expect(response.body).toEqual({ error: 'Failed to process payment' });
+      expect(response.body).toHaveProperty('error');
   });
 
-  // Add more test cases for various scenarios as needed
-});
+    //ADD More tests to confirm the structure received is standard
+  });

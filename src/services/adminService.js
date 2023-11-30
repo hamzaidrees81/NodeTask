@@ -2,6 +2,13 @@ const { Sequelize } = require('sequelize');
 const { Job, Contract, Profile } = require('../models');
 const ContentNotFoundException = require('../errors/ContentNotFoundException');
 
+/**
+ * fetch best profession by maximum sum of price of jobs
+ * @param {*} startDate 
+ * @param {*} endDate 
+ * @returns 
+ */
+
 async function getBestProfession(startDate, endDate) {
   
   const result = await Job.findOne({
@@ -36,6 +43,13 @@ async function getBestProfession(startDate, endDate) {
   return result.Contract.Client.profession;
 }
 
+/**
+ * get clients who earned most during a tenure
+ * @param {*} startDate 
+ * @param {*} endDate 
+ * @param {*} limit 
+ * @returns 
+ */
 async function getBestClients(startDate, endDate, limit) {
   
   const results = await Job.findAll({

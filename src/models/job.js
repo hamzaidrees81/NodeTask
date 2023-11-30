@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('./sequelize'); // Import the Sequelize instance
+const sequelize = require('./sequelize');
 
 class Job extends Model {}
 
@@ -15,8 +15,8 @@ Job.init(
     },
     paid: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false // Use defaultValue instead of default
-    },
+      defaultValue: false 
+      },
     paymentDate: {
       type: DataTypes.DATE
     }

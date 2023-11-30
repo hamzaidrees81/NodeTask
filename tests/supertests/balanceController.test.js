@@ -1,6 +1,5 @@
-// test/depositBalance.test.js
 const request = require('supertest');
-const app = require('../../src/app'); // Import your Express app
+const app = require('../../src/app');
 
 const { depositToClient } = require('../../src/services/balanceService');
 
@@ -8,7 +7,7 @@ jest.mock('../../src/services/balanceService');
 
 describe('Balance Controller Endpoints', () => {
   it('should deposit balance for a client', async () => {
-    const userId = 123; // Example user ID
+    const userId = 123;
     const depositAmount = 100;
 
     const mockResult = {
@@ -28,7 +27,7 @@ describe('Balance Controller Endpoints', () => {
   });
 
   it('should handle invalid deposit amount', async () => {
-    const userId = 123; // Example user ID
+    const userId = 123;
     const depositAmount = 'invalid';
 
     const response = await request(app)
@@ -53,5 +52,5 @@ describe('Balance Controller Endpoints', () => {
     expect(response.body).toEqual({ error: 'User id is missing.' });
   });
 
-  // Add more test cases for various scenarios as needed
-});
+    //ADD More tests to confirm the structure received is standard
+  });

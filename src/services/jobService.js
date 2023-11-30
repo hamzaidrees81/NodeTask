@@ -1,6 +1,11 @@
 const { Sequelize } = require('sequelize');
 const { sequelize, Job, Contract, Profile } = require('../models');
 
+/**
+ * get all unpaid jobs
+ * @param {*} profileId 
+ * @returns 
+ */
 async function getUnpaidJobs(profileId) {
   try {
     const unpaidJobs = await Job.findAll({
@@ -25,6 +30,12 @@ async function getUnpaidJobs(profileId) {
   }
 }
 
+/**
+ * pay for a job - move money from client to contractor
+ * @param {*} profileId 
+ * @param {*} jobId 
+ * @returns 
+ */
 async function payForJob(profileId, jobId) {
   try {
     await sequelize.transaction(async (t) => {

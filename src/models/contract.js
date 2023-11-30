@@ -1,15 +1,15 @@
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('./sequelize'); // Import the Sequelize instance
+const sequelize = require('./sequelize'); 
 
 class Contract extends Model {}
 Contract.init(
   {
     terms: {
-      type: DataTypes.TEXT, // Change Sequelize.TEXT to DataTypes.TEXT
+      type: DataTypes.TEXT, 
       allowNull: false
     },
     status: {
-      type: DataTypes.ENUM('new', 'in_progress', 'terminated'), // Use DataTypes.ENUM
+      type: DataTypes.ENUM('new', 'in_progress', 'terminated'),
     }
   },
   {
@@ -18,4 +18,4 @@ Contract.init(
   }
 );
 
-module.exports = Contract; // Don't forget to export the Contract model
+module.exports = Contract;

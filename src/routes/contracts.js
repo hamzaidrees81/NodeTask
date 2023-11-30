@@ -3,7 +3,7 @@ const router = express.Router()
 const {
 	getContractsByProfile,
 	getContractById
-} = require('../controllers/ContractController')
+} = require('../controllers/contractController')
 
 router.get('/', getContractsByProfile);
 router.get('/:id', getContractById)
